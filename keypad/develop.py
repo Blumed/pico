@@ -6,7 +6,6 @@
 
 from machine import Pin
 from utime import sleep
-import _thread
 import secret
 
 # Create a map between keypad buttons and characters
@@ -26,6 +25,8 @@ row_pins = []   #output
 # Keys entered by the user
 guess = []
 
+program_stating = True
+
 # Setup led pins to be an output
 led_green = Pin(14, Pin.OUT, Pin.PULL_UP)
 led_clear = Pin(13, Pin.OUT, Pin.PULL_UP)
@@ -33,52 +34,99 @@ led_red   = Pin(11, Pin.OUT, Pin.PULL_UP)
 
 # Setup and initialize state object
 class States:
-    INACTIVE  = 'inactive'
+    START     = 'start'
     ACTIVE    = 'active'
     CORRECT   = 'correct'
     INCORRECT = 'incorrect'
-
 State = States()
 
 # Loop to assign GPIO pins and setup input and outputs
-for x in range(0,4):
-    
-    row_pins.append(Pin(keypad_rows[x], Pin.OUT))
-    row_pins[x].value(1)
-    col_pins.append(Pin(keypad_columns[x], Pin.IN, Pin.PULL_DOWN))
-    col_pins[x].value(0)
+for pin in range(0,4):
+    row_pins.append(Pin(keypad_rows[pin], Pin.OUT))
+    row_pins[pin].value(1)
+    col_pins.append(Pin(keypad_columns[pin], Pin.IN, Pin.PULL_DOWN))
+    col_pins[pin].value(0)
 
+# Collection of sequences to check
+sequences = [
+    secret.sequence_1,
+    secret.sequence_2,
+    secret.sequence_3,
+    secret.sequence_4,
+    secret.sequence_5]
 
 #### Light State ####
 
+def led_on(led): led.value(1)
+def led_off(led): led.value(0)
+leds = [led_green, led_clear, led_red]
+
+def light_dance():
+    for led in leds:
+        led_on(led)
+        sleep(0.3)
+        led_off(led)
+
+    led_on(led_clear)
+    sleep(0.3)
+    led_off(led_clear)
+
+    for led in leds:
+        led_on(led)
+        sleep(0.3)
+        led_off(led)
+
+    for led in reversed(leds[:-1]):
+        led_on(led)
+        sleep(0.3)
+        led_off(led)
+
+def light_start():
+    light_dance()
+
+    global program_stating
+    program_stating = False
+
+def light_active():
+    led_on(led_clear)
+    sleep(0.2)
+    led_off(led_clear)
+
+def light_correct():
+    light_dance()
+    led_on(led_green)
+    sleep(3)
+    led_off(led_green)
+
+def light_incorrect():
+    light_dance()
+    led_on(led_red)
+    sleep(3)
+    led_off(led_red)
+
 def light(state):
-    if state == State.INACTIVE:
-        led_clear.value(1)
-        sleep(1)
-        led_clear.value(0)
+    if state == State.START: light_start()
+    if state ==  State.ACTIVE: light_active()
+    if state ==  State.CORRECT: light_correct()
+    if state ==  State.INCORRECT: light_incorrect()
 
-    if state == State.ACTIVE:
-        led_clear.value(1)
-        sleep(0.01)
-        led_clear.value(0)
+##### To check Pin #####
 
-    if state == State.CORRECT:
-        led_clear.value(0)
-        led_green.value(1)
-        sleep(3)
-        led_green.value(0)
-        light(State.INACTIVE)
+def checkPin(guess):
+    print(guess)
 
-    if state == State.INCORRECT:
-        led_clear.value(0)
-        led_red.value(1)
-        sleep(3)
-        led_red.value(0)
-        light(State.INACTIVE)
+    if guess in sequences:
+        print("You got the secret pin correct")
+        light(State.CORRECT)
+        guess.clear()
+    else:
+        print("Better luck next time")
+        light(State.INCORRECT)
+        guess.clear()
 
 #### Scan keys #####
     
-def scankeys():
+def scan_keys():
     for row in range(4):
         for col in range(4): 
             row_pins[row].high()
@@ -93,33 +141,25 @@ def scankeys():
                     guess.append(key_press)
                
                 if key_press == 'ENT':
+                    light(State.ACTIVE)
                     checkPin(guess)
 
                 if key_press == 'CLR':
+                    light(State.ACTIVE)
                     guess.clear()
                     
         row_pins[row].low()
-
-##### To check Pin #####
-
-def checkPin(guess):
-    print(guess)
-
-    if guess in [secret.sequence_1,secret.sequence_2, secret.sequence_3, secret.sequence_4,secret.sequence_5]:
-        print("You got the secret pin correct")
-        light(State.CORRECT)
-        guess.clear()
-    else:
-        print("Better luck next time")
-        light(State.INCORRECT)
-        guess.clear()
 
 ##### Initialize Application #####
 
 print("Enter the secret Pin")
 
-while True:
-    scankeys()
+try:
+    while True:
+        if program_stating == True:
+            light(State.START)
 
-    # if len(guess) == 0:
-    #     light(State.ACTIVE)
+        scan_keys()
+
+except KeyboardInterrupt:
+    print('Program termincated')
