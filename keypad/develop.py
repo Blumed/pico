@@ -8,6 +8,10 @@ from machine import Pin
 from utime import sleep
 from secret import sequences
 
+# utility pin on off functions
+def turn_on(pin): pin.value(1)
+def turn_off(pin): pin.value(0)
+
 # Create a map between keypad buttons and characters
 matrix_keys = [['1', '2', '3', 'A'],
                ['4', '5', '6', 'P'],
@@ -20,7 +24,14 @@ keypad_columns = [5,4,3,2]
 
 # Create two empty lists to set up pins
 col_pins = []   #inputs
-row_pins = []   #output   
+row_pins = []   #output
+
+# Loop to assign GPIO pins and setup input and outputs
+for pin in range(0,4):
+    row_pins.append(Pin(keypad_rows[pin], Pin.OUT))
+    turn_on(row_pins[pin])
+    col_pins.append(Pin(keypad_columns[pin], Pin.IN, Pin.PULL_DOWN))
+    turn_off(col_pins[pin])
 
 # Keys entered by the user
 guess = []
@@ -41,38 +52,29 @@ class States:
     INCORRECT = 'incorrect'
 State = States()
 
-# Loop to assign GPIO pins and setup input and outputs
-for pin in range(0,4):
-    row_pins.append(Pin(keypad_rows[pin], Pin.OUT))
-    row_pins[pin].value(1)
-    col_pins.append(Pin(keypad_columns[pin], Pin.IN, Pin.PULL_DOWN))
-    col_pins[pin].value(0)
-
 #### Light State ####
 
-def led_on(led): led.value(1)
-def led_off(led): led.value(0)
-leds = [led_green, led_clear, led_red]
-
 def light_dance():
-    for led in leds:
-        led_on(led)
-        sleep(0.3)
-        led_off(led)
+    leds = [led_green, led_clear, led_red]
 
-    led_on(led_clear)
+    for led in leds:
+        turn_on(led)
+        sleep(0.3)
+        turn_off(led)
+
+    turn_on(led_clear)
     sleep(0.3)
-    led_off(led_clear)
+    turn_off(led_clear)
 
     for led in leds:
-        led_on(led)
+        turn_on(led)
         sleep(0.3)
-        led_off(led)
+        turn_off(led)
 
     for led in reversed(leds[:-1]):
-        led_on(led)
+        turn_on(led)
         sleep(0.3)
-        led_off(led)
+        turn_off(led)
 
 def light_start():
     light_dance()
@@ -81,24 +83,24 @@ def light_start():
     program_stating = False
 
 def light_active():
-    led_on(led_clear)
+    turn_on(led_clear)
     sleep(0.2)
-    led_off(led_clear)
+    turn_off(led_clear)
 
 def light_correct():
     light_dance()
-    led_on(led_green)
+    turn_on(led_green)
     sleep(3)
-    led_off(led_green)
+    turn_off(led_green)
 
 def light_incorrect():
     light_dance()
-    led_on(led_clear)
+    turn_on(led_clear)
     sleep(0.3)
-    led_off(led_clear)
-    led_on(led_red)
+    turn_off(led_clear)
+    turn_on(led_red)
     sleep(3)
-    led_off(led_red)
+    turn_off(led_red)
 
 def light(state):
     if state == State.START: light_start()
