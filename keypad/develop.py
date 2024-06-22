@@ -6,7 +6,7 @@
 
 from machine import Pin
 from utime import sleep
-import secret
+from secret import sequences
 
 # Create a map between keypad buttons and characters
 matrix_keys = [['1', '2', '3', 'A'],
@@ -25,6 +25,7 @@ row_pins = []   #output
 # Keys entered by the user
 guess = []
 
+# When Pico turns on run opening light sequence
 program_stating = True
 
 # Setup led pins to be an output
@@ -46,14 +47,6 @@ for pin in range(0,4):
     row_pins[pin].value(1)
     col_pins.append(Pin(keypad_columns[pin], Pin.IN, Pin.PULL_DOWN))
     col_pins[pin].value(0)
-
-# Collection of sequences to check
-sequences = [
-    secret.sequence_1,
-    secret.sequence_2,
-    secret.sequence_3,
-    secret.sequence_4,
-    secret.sequence_5]
 
 #### Light State ####
 
@@ -100,6 +93,9 @@ def light_correct():
 
 def light_incorrect():
     light_dance()
+    led_on(led_clear)
+    sleep(0.3)
+    led_off(led_clear)
     led_on(led_red)
     sleep(3)
     led_off(led_red)
