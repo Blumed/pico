@@ -48,6 +48,7 @@ led_red   = Pin(11, Pin.OUT, Pin.PULL_UP)
 class States:
     START     = 'start'
     ACTIVE    = 'active'
+    INACTIVE    = 'inactive'
     CORRECT   = 'correct'
     INCORRECT = 'incorrect'
 State = States()
@@ -82,18 +83,23 @@ def light_start():
     global program_stating
     program_stating = False
 
-def light_active():
+def light_inactive():
     turn_on(led_clear)
-    sleep(0.2)
+
+def light_active():
     turn_off(led_clear)
+    sleep(0.2)
+    light_inactive()
 
 def light_correct():
+    turn_off(led_clear)
     light_dance()
     turn_on(led_green)
     sleep(3)
     turn_off(led_green)
 
 def light_incorrect():
+    turn_off(led_clear)
     light_dance()
     turn_on(led_clear)
     sleep(0.3)
@@ -105,6 +111,7 @@ def light_incorrect():
 def light(state):
     if state == State.START: light_start()
     if state ==  State.ACTIVE: light_active()
+    if state ==  State.INACTIVE: light_inactive()
     if state ==  State.CORRECT: light_correct()
     if state ==  State.INCORRECT: light_incorrect()
 
@@ -154,10 +161,10 @@ print("Enter the secret Pin")
 
 try:
     while True:
-        if program_stating == True:
-            light(State.START)
-
+        if program_stating == True: light(State.START)
+        if len(guess) == 0: light(State.INACTIVE)
         scan_keys()
 
 except KeyboardInterrupt:
-    print('Program termincated')
+    turn_off(led_clear)
+    print('Program terminated')
