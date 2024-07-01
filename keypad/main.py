@@ -40,7 +40,7 @@ guess = []
 program_stating = True
 
 # Setup led pins to be an output
-led_green = Pin(14, Pin.OUT, Pin.PULL_UP)
+led_green = Pin(15, Pin.OUT, Pin.PULL_UP)
 led_clear = Pin(13, Pin.OUT, Pin.PULL_UP)
 led_red   = Pin(11, Pin.OUT, Pin.PULL_UP)
 
@@ -121,7 +121,7 @@ def checkPin(guess):
     print(guess)
 
     if guess in sequences:
-        print("You got the secret pin correct")
+        print("You have entered the correct pin number")
         light(State.CORRECT)
         guess.clear()
     else:
